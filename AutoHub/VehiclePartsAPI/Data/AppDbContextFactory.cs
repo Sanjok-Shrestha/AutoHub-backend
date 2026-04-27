@@ -10,7 +10,7 @@ namespace VehicleManagementSystem.VehiclePartsAPI.Data
             var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
 
             optionsBuilder.UseNpgsql(
-                "Host=localhost;Port=5432;Database=VehicleDB;Username=postgres;Password=ishpa"
+                "Host=localhost;Port=5432;Database=adminAutoHub;Username=postgres;Password=test123"
             );
 
             return new AppDbContext(optionsBuilder.Options);
