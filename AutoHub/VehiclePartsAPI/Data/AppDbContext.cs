@@ -1,4 +1,4 @@
-﻿using AutoHub.VehiclePartsAPI.Models;
+﻿
 using Microsoft.EntityFrameworkCore;
 using VehicleManagementSystem.VehiclePartsAPI.Models;
 
