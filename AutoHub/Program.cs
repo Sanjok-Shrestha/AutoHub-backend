@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using VehicleManagementSystem.VehiclePartsAPI.Data;
+using VehicleManagementSystem.VehiclePartsAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,7 +11,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
+        policy.WithOrigins("http://localhost:3000")
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -18,6 +19,8 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+builder.Services.AddScoped<InvoiceService>();
+builder.Services.AddScoped<EmailService>();
 
 var app = builder.Build();
 
