@@ -15,6 +15,7 @@ namespace VehicleManagementSystem.VehiclePartsAPI.Data
         public DbSet<Sale> Sales { get; set; }
         public DbSet<Credit> Credits { get; set; }
         public DbSet<Vendor> Vendors { get; set; }
+        public DbSet<Staff> Staffs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
