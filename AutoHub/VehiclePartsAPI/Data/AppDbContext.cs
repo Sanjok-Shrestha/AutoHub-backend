@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿
+using Microsoft.EntityFrameworkCore;
 using VehicleManagementSystem.VehiclePartsAPI.Models;
 
 namespace VehicleManagementSystem.VehiclePartsAPI.Data
@@ -13,6 +14,8 @@ namespace VehicleManagementSystem.VehiclePartsAPI.Data
         public DbSet<Part> Parts { get; set; }
         public DbSet<Sale> Sales { get; set; }
         public DbSet<Credit> Credits { get; set; }
+        public DbSet<Vendor> Vendors { get; set; }
+        public DbSet<Staff> Staffs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
