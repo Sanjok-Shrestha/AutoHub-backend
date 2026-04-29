@@ -79,7 +79,7 @@
     ],
     "ReturnTypes": [
       {
-        "Type": "AutoHub.API.Models.Appointment",
+        "Type": "Appointment",
         "MediaTypes": [
           "text/plain",
           "application/json",
@@ -99,7 +99,7 @@
     "Parameters": [],
     "ReturnTypes": [
       {
-        "Type": "System.Collections.Generic.IEnumerable\u00601[[AutoHub.API.Models.Appointment, AutoHub, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[Appointment, AutoHub, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
         "MediaTypes": [
           "text/plain",
           "application/json",
@@ -111,23 +111,29 @@
   },
   {
     "ContainingType": "AutoHub.API.Controllers.CustomersController",
+    "Method": "Checkout",
+    "RelativePath": "api/customers/checkout",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "AutoHub.API.Models.CheckoutDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "AutoHub.API.Controllers.CustomersController",
     "Method": "GetHistory",
     "RelativePath": "api/customers/history",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
     "Parameters": [],
-    "ReturnTypes": [
-      {
-        "Type": "AutoHub.API.Models.HistoryResponse",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
+    "ReturnTypes": []
   },
   {
     "ContainingType": "AutoHub.API.Controllers.CustomersController",
@@ -174,6 +180,16 @@
         "StatusCode": 200
       }
     ]
+  },
+  {
+    "ContainingType": "AutoHub.API.Controllers.CustomersController",
+    "Method": "GetPartsCatalog",
+    "RelativePath": "api/customers/parts",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
   },
   {
     "ContainingType": "AutoHub.API.Controllers.CustomersController",

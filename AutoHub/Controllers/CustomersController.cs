@@ -1,19 +1,19 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using AutoHub.API.Data;
+using AutoHub.API.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
-using AutoHub.API.Data;
-using AutoHub.API.Models;
 
 namespace AutoHub.API.Controllers;
 
 [ApiController, Route("api/customers"), Authorize(Roles = "Customer")]
 public class CustomersController : ControllerBase
 {
-    private readonly ApplicationDbContext _db;
+    private readonly AppDbContext _db;
     private readonly PasswordHasher<Customer> _hasher = new();
 
-    public CustomersController(ApplicationDbContext db) => _db = db;
+    public CustomersController(AppDbContext db) => _db = db;
 
     private int GetId() => int.Parse(User.FindFirst("CustomerId")?.Value ?? throw new UnauthorizedAccessException());
 
@@ -21,9 +21,26 @@ public class CustomersController : ControllerBase
     [HttpGet("profile")]
     public async Task<ActionResult<ProfileResponse>> GetProfile()
     {
-        var c = await _db.Customers.FirstOrDefaultAsync(x => x.Id == GetId());
+        var customerId = GetId();
+
+        var c = await _db.Customers.FirstOrDefaultAsync(x => x.Id == customerId);
         if (c == null) return NotFound(new { error = "Not found" });
-        return Ok(new ProfileResponse { Id = c.Id, Name = c.Name, Email = c.Email, Phone = c.Phone, RegisteredDate = c.RegisteredDate, TotalSpent = c.TotalSpent, EmailConfirmed = c.EmailConfirmed });
+
+        // ✅ Calculate total spent from PAID transactions only
+        var totalSpent = await _db.Transactions
+            .Where(t => t.CustomerId == customerId && t.PaymentStatus == "Paid")
+            .SumAsync(t => t.TotalAmount);
+
+        return Ok(new ProfileResponse
+        {
+            Id = c.Id,
+            Name = c.Name,
+            Email = c.Email,
+            Phone = c.Phone,
+            RegisteredDate = c.RegisteredDate,
+            TotalSpent = totalSpent,  // ✅ Now shows actual calculated total
+            EmailConfirmed = c.EmailConfirmed
+        });
     }
 
     [HttpPut("profile")]
@@ -37,18 +54,56 @@ public class CustomersController : ControllerBase
         await _db.SaveChangesAsync();
         return NoContent();
     }
+
     [HttpGet("parts")]
     public IActionResult GetPartsCatalog()
     {
         var catalog = new[]
         {
-        new { Id = 1, Name = "Ceramic Brake Pads", Price = 45.00m, Category = "Brakes", Image = "🛑" },
-        new { Id = 2, Name = "Premium Oil Filter", Price = 12.50m, Category = "Engine", Image = "🛢️" },
-        new { Id = 3, Name = "Iridium Spark Plugs (4pc)", Price = 28.00m, Category = "Ignition", Image = "⚡" },
-        new { Id = 4, Name = "HEPA Air Filter", Price = 18.00m, Category = "Engine", Image = "💨" },
-        new { Id = 5, Name = "All-Weather Wiper Blades", Price = 22.00m, Category = "Exterior", Image = "🌧️" },
-        new { Id = 6, Name = "LED Headlight Bulbs", Price = 35.00m, Category = "Lighting", Image = "💡" }
-    };
+            new {
+                Id = 1,
+                Name = "Ceramic Brake Pads",
+                Price = 45.00m,
+                Category = "Brakes", 
+                // ✅ Frontend public folder path - images stay in frontend!
+                Image = "/images/parts/pads.jpeg"
+            },
+            new {
+                Id = 2,
+                Name = "Premium Oil Filter",
+                Price = 12.50m,
+                Category = "Engine",
+                Image = "/images/parts/Oil-filters.jpg"
+            },
+            new {
+                Id = 3,
+                Name = "Iridium Spark Plugs (4pc)",
+                Price = 28.00m,
+                Category = "Ignition",
+                Image = "/images/parts/4pg.jpeg"
+            },
+            new {
+                Id = 4,
+                Name = "HEPA Air Filter",
+                Price = 18.00m,
+                Category = "Engine",
+                Image = "/images/parts/Hepa.jpeg"
+            },
+            new {
+                Id = 5,
+                Name = "All-Weather Wiper Blades",
+                Price = 22.00m,
+                Category = "Exterior",
+                Image = "/images/parts/Windshield.jpeg"
+            },
+            new {
+                Id = 6,
+                Name = "LED Headlight Bulbs",
+                Price = 35.00m,
+                Category = "Lighting",
+                Image = "/images/parts/Led.jpeg"
+            }
+        };
         return Ok(catalog);
     }
 
@@ -62,12 +117,16 @@ public class CustomersController : ControllerBase
         var customerId = GetId();
         var total = dto.Items.Sum(i => i.Quantity * i.UnitPrice);
 
+        // ✅ REALISTIC PAYMENT STATUS:
+        // Cash = instantly "Paid", Online methods = "Pending Verification"
+        var paymentStatus = dto.PaymentMethod == "Cash" ? "Paid" : "Pending Verification";
+
         var transaction = new Transaction
         {
             CustomerId = customerId,
             TotalAmount = total,
             PaymentMethod = dto.PaymentMethod,
-            PaymentStatus = "Paid",
+            PaymentStatus = paymentStatus, // ✅ Dynamic status
             Date = DateTime.UtcNow
         };
 
@@ -87,6 +146,7 @@ public class CustomersController : ControllerBase
 
         return Ok(new { transactionId = transaction.Id, total, message = "Purchase successful!" });
     }
+
     [HttpGet("vehicles")]
     public async Task<ActionResult<IEnumerable<Vehicle>>> GetVehicles() =>
         Ok(await _db.Vehicles.Where(v => v.CustomerId == GetId()).OrderBy(v => v.Make).ToListAsync());
@@ -125,11 +185,50 @@ public class CustomersController : ControllerBase
     [HttpPost("appointments")]
     public async Task<ActionResult<Appointment>> BookAppointment([FromBody] AppointmentDto dto)
     {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-        if (dto.PreferredDate <= DateTime.UtcNow) return BadRequest(new { error = "Date must be future" });
-        var a = new Appointment { CustomerId = GetId(), PreferredDate = dto.PreferredDate, ServiceType = dto.ServiceType, Notes = dto.Notes, Status = "Pending" };
-        _db.Appointments.Add(a); await _db.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetAppointments), new { id = a.Id }, a);
+        if (!ModelState.IsValid)
+            return BadRequest(new { error = "Invalid input", details = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage) });
+
+        if (dto.PreferredDate <= DateTime.UtcNow)
+            return BadRequest(new { error = "Preferred date must be in the future" });
+
+        if (string.IsNullOrWhiteSpace(dto.ServiceType))
+            return BadRequest(new { error = "Service type is required" });
+
+        try
+        {
+            var customerId = GetId();
+            var customerExists = await _db.Customers.AnyAsync(c => c.Id == customerId);
+            if (!customerExists)
+                return Unauthorized(new { error = "Customer not found" });
+
+            var appointment = new Appointment
+            {
+                CustomerId = customerId,
+                PreferredDate = dto.PreferredDate.ToUniversalTime(),
+                ServiceType = dto.ServiceType?.Trim() ?? string.Empty,
+                Notes = dto.Notes?.Trim(),
+                Status = "Pending"
+            };
+
+            _db.Appointments.Add(appointment);
+            await _db.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetAppointments), new { id = appointment.Id }, appointment);
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException ex)
+        {
+            var innerMsg = ex.InnerException?.Message ?? ex.Message;
+            System.Diagnostics.Debug.WriteLine($" Appointment save failed: {innerMsg}");
+
+            if (innerMsg.Contains("null value in column") || innerMsg.Contains("violates not-null"))
+                return BadRequest(new { error = "Missing required field. Please check your input." });
+            if (innerMsg.Contains("foreign key constraint"))
+                return BadRequest(new { error = "Invalid customer or vehicle reference." });
+            if (innerMsg.Contains("value too long"))
+                return BadRequest(new { error = "One or more fields exceed maximum length." });
+
+            return BadRequest(new { error = "Failed to book appointment. Please try again.", details = innerMsg });
+        }
     }
 
     [HttpGet("appointments")]
@@ -165,12 +264,59 @@ public class CustomersController : ControllerBase
 
     #region Feature 14: History
     [HttpGet("history")]
-    public async Task<ActionResult<HistoryResponse>> GetHistory()
+    public async Task<ActionResult<object>> GetHistory()
     {
-        var cid = GetId();
-        var purchases = await _db.Transactions.Where(t => t.CustomerId == cid).Include(t => t.Items).OrderByDescending(t => t.Date).ToListAsync();
-        var services = await _db.Appointments.Where(a => a.CustomerId == cid).OrderByDescending(a => a.PreferredDate).ToListAsync();
-        return Ok(new HistoryResponse { Purchases = purchases, Services = services });
+        try
+        {
+            var customerId = GetId();
+
+            var purchases = await _db.Transactions
+                .Where(t => t.CustomerId == customerId)
+                .OrderByDescending(t => t.Date)
+                .Select(t => new
+                {
+                    id = t.Id,
+                    totalAmount = t.TotalAmount,
+                    paymentMethod = t.PaymentMethod,
+                    paymentStatus = t.PaymentStatus,
+                    date = t.Date,
+                    items = _db.TransactionItems
+                        .Where(i => i.TransactionId == t.Id)
+                        .Select(i => new
+                        {
+                            id = i.Id,
+                            partName = i.PartName,
+                            quantity = i.Quantity,
+                            unitPrice = i.UnitPrice
+                        })
+                        .ToList()
+                })
+                .ToListAsync();
+
+            var services = await _db.Appointments
+                .Where(a => a.CustomerId == customerId)
+                .OrderByDescending(a => a.PreferredDate)
+                .Select(a => new
+                {
+                    id = a.Id,
+                    preferredDate = a.PreferredDate,
+                    serviceType = a.ServiceType,
+                    notes = a.Notes,
+                    status = a.Status
+                })
+                .ToListAsync();
+
+            return Ok(new { purchases, services });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new
+            {
+                error = "Failed to load history",
+                details = ex.Message,
+                stack = ex.StackTrace?.Substring(0, Math.Min(200, ex.StackTrace?.Length ?? 0))
+            });
+        }
     }
     #endregion
 }

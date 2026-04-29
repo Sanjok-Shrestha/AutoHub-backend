@@ -14,13 +14,13 @@ namespace AutoHub.API.Controllers;
 [ApiController, Route("api/auth")]
 public class AuthController : ControllerBase
 {
-    private readonly ApplicationDbContext _db;
+    private readonly AppDbContext _db;
     private readonly IConfiguration _config;
     private readonly IEmailService _email;
     private readonly PasswordHasher<Customer> _hasher = new();
     private readonly ILogger<AuthController> _log;
 
-    public AuthController(ApplicationDbContext db, IConfiguration config, IEmailService email, ILogger<AuthController> log)
+    public AuthController(AppDbContext db, IConfiguration config, IEmailService email, ILogger<AuthController> log)
     {
         _db = db;
         _config = config;
