@@ -1,16 +1,24 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using AutoHub.API.Data;
 using AutoHub.API.Services;
+using VehicleManagementSystem.VehiclePartsAPI.Data;
+using VehicleManagementSystem.VehiclePartsAPI.Services;
+using CustomerDbContext = AutoHub.API.Data.AppDbContext;
+using PartsDbContext = VehicleManagementSystem.VehiclePartsAPI.Data.AppDbContext;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Database
-builder.Services.AddDbContext<AppDbContext>(options =>
+// Customer database
+builder.Services.AddDbContext<CustomerDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"),
         npgsql => npgsql.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null)));
+
+// Vehicle parts database
+builder.Services.AddDbContext<PartsDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // ✅ Services - Conditional registration based on environment
 if (builder.Environment.IsDevelopment())
@@ -23,6 +31,10 @@ else
     // 📧 Use real SMTP email service in production
     builder.Services.AddScoped<IEmailService, EmailService>();
 }
+
+// Vehicle parts services
+builder.Services.AddScoped<InvoiceService>();
+builder.Services.AddScoped<VehicleManagementSystem.VehiclePartsAPI.Services.EmailService>();
 
 // JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(opt =>
@@ -49,6 +61,7 @@ builder.Services.AddAuthorization(opt =>
 // CORS
 builder.Services.AddCors(opt => opt.AddPolicy("ReactApp", p =>
     p.WithOrigins(
+        "http://localhost:3000",
         "http://localhost:5173",
         "https://localhost:5173"
     )
@@ -86,7 +99,7 @@ app.MapControllers();
 // Auto-migrate on startup
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var db = scope.ServiceProvider.GetRequiredService<CustomerDbContext>();
     await db.Database.MigrateAsync();
 }
 
