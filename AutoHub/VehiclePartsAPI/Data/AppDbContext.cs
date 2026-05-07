@@ -16,6 +16,7 @@ namespace VehicleManagementSystem.VehiclePartsAPI.Data
         public DbSet<Credit> Credits { get; set; }
         public DbSet<Vendor> Vendors { get; set; }
         public DbSet<Staff> Staffs { get; set; }
+        public DbSet<PurchaseInvoice> PurchaseInvoices { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -29,6 +30,14 @@ namespace VehicleManagementSystem.VehiclePartsAPI.Data
 
             modelBuilder.Entity<Sale>()
                 .Property(s => s.FinalAmount)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<PurchaseInvoice>()
+                .Property(p => p.UnitPrice)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<PurchaseInvoice>()
+                .Property(p => p.TotalAmount)
                 .HasPrecision(18, 2);
         }
     }
