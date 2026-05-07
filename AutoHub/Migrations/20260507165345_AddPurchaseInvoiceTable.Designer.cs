@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using VehicleManagementSystem.VehiclePartsAPI.Data;
@@ -11,9 +12,11 @@ using VehicleManagementSystem.VehiclePartsAPI.Data;
 namespace AutoHub.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260507165345_AddPurchaseInvoiceTable")]
+    partial class AddPurchaseInvoiceTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -53,74 +56,6 @@ namespace AutoHub.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Credits");
-                });
-
-            modelBuilder.Entity("VehicleManagementSystem.VehiclePartsAPI.Models.Invoice", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("CustomerEmail")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("CustomerName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<decimal>("FinalAmount")
-                        .HasColumnType("numeric");
-
-                    b.Property<bool>("IsDiscountApplied")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsEmailSent")
-                        .HasColumnType("boolean");
-
-                    b.Property<decimal>("TotalAmount")
-                        .HasColumnType("numeric");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Invoices");
-                });
-
-            modelBuilder.Entity("VehicleManagementSystem.VehiclePartsAPI.Models.InvoiceItem", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("InvoiceId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("PartId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("integer");
-
-                    b.Property<decimal>("Subtotal")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("UnitPrice")
-                        .HasColumnType("numeric");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("InvoiceId");
-
-                    b.HasIndex("PartId");
-
-                    b.ToTable("InvoiceItems");
                 });
 
             modelBuilder.Entity("VehicleManagementSystem.VehiclePartsAPI.Models.Part", b =>
@@ -286,30 +221,6 @@ namespace AutoHub.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Vendors");
-                });
-
-            modelBuilder.Entity("VehicleManagementSystem.VehiclePartsAPI.Models.InvoiceItem", b =>
-                {
-                    b.HasOne("VehicleManagementSystem.VehiclePartsAPI.Models.Invoice", "Invoice")
-                        .WithMany("Items")
-                        .HasForeignKey("InvoiceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("VehicleManagementSystem.VehiclePartsAPI.Models.Part", "Part")
-                        .WithMany()
-                        .HasForeignKey("PartId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Invoice");
-
-                    b.Navigation("Part");
-                });
-
-            modelBuilder.Entity("VehicleManagementSystem.VehiclePartsAPI.Models.Invoice", b =>
-                {
-                    b.Navigation("Items");
                 });
 #pragma warning restore 612, 618
         }
