@@ -1,5 +1,4 @@
-﻿
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using VehicleManagementSystem.VehiclePartsAPI.Models;
 
 namespace VehicleManagementSystem.VehiclePartsAPI.Data
