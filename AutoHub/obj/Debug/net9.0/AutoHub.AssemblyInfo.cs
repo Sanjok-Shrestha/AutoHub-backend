@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AutoHub")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bd27c6f401ef7a5f658da76408b75d56ceb0bc35")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1e926f2deeb44b1756b43f6be40d40c366b4a3d4")]
 [assembly: System.Reflection.AssemblyProductAttribute("AutoHub")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AutoHub")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
