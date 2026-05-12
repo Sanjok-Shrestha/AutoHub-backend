@@ -13,7 +13,7 @@ namespace VehicleManagementSystem.VehiclePartsAPI.Services
             _context = context;
         }
 
-        // 1. Top Spenders
+        // Top Spenders
         public async Task<List<TopSpenderDto>> GetTopSpendersAsync()
         {
             return await _context.Invoices
@@ -28,7 +28,7 @@ namespace VehicleManagementSystem.VehiclePartsAPI.Services
                 .ToListAsync();
         }
 
-        // 2. Regular Customers
+        //Regular Customers
         public async Task<List<RegularCustomerDto>> GetRegularCustomersAsync()
         {
             return await _context.Invoices
@@ -43,7 +43,7 @@ namespace VehicleManagementSystem.VehiclePartsAPI.Services
                 .ToListAsync();
         }
 
-        // 3. Overdue Credits
+        // Overdue Credits
         public async Task<List<OverdueCreditDto>> GetOverdueCreditsAsync()
         {
             // Overdue means older than 1 month and unpaid

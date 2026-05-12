@@ -20,7 +20,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddScoped<InvoiceService>();
-builder.Services.AddScoped<EmailService>();
+builder.Services.AddScoped<InvoiceEmailService>();
 builder.Services.AddScoped<ReportService>();
 
 var app = builder.Build();

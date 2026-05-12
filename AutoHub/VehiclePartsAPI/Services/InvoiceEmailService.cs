@@ -4,11 +4,11 @@ using VehicleManagementSystem.VehiclePartsAPI.DTOs;
 
 namespace VehicleManagementSystem.VehiclePartsAPI.Services
 {
-    public class EmailService
+    public class InvoiceEmailService
     {
         private readonly IConfiguration _config;
 
-        public EmailService(IConfiguration config)
+        public InvoiceEmailService(IConfiguration config)
         {
             _config = config;
         }

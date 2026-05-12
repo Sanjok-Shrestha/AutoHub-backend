@@ -9,9 +9,9 @@ namespace VehicleManagementSystem.VehiclePartsAPI.Controllers
     public class InvoiceController : ControllerBase
     {
         private readonly InvoiceService _invoiceService;
-        private readonly EmailService _emailService;
+        private readonly InvoiceEmailService _emailService;
 
-        public InvoiceController(InvoiceService invoiceService, EmailService emailService)
+        public InvoiceController(InvoiceService invoiceService, InvoiceEmailService emailService)
         {
             _invoiceService = invoiceService;
             _emailService = emailService;
