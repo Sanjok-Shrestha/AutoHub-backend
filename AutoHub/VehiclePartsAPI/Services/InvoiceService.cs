@@ -119,6 +119,49 @@ namespace VehicleManagementSystem.VehiclePartsAPI.Services
             }
         }
 
+        // Updates basic invoice details
+        public async Task<InvoiceResponseDto?> UpdateInvoiceAsync(int id, string customerName, string customerEmail)
+        {
+            var invoice = await _context.Invoices
+                .Include(i => i.Items)
+                    .ThenInclude(i => i.Part)
+                .FirstOrDefaultAsync(i => i.Id == id);
+
+            if (invoice == null) return null;
+
+            invoice.CustomerName = customerName;
+            invoice.CustomerEmail = customerEmail;
+
+            await _context.SaveChangesAsync();
+
+            return MapToResponse(invoice);
+        }
+
+        // Deletes invoice and restores stock
+        public async Task<bool> DeleteInvoiceAsync(int id)
+        {
+            var invoice = await _context.Invoices
+                .Include(i => i.Items)
+                    .ThenInclude(i => i.Part)
+                .FirstOrDefaultAsync(i => i.Id == id);
+
+            if (invoice == null) return false;
+
+            // Restore the part stock quantities
+            foreach (var item in invoice.Items)
+            {
+                if (item.Part != null)
+                {
+                    item.Part.Quantity += item.Quantity;
+                }
+            }
+
+            _context.Invoices.Remove(invoice);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
         // Convert Invoice to InvoiceResponseDto
         private static InvoiceResponseDto MapToResponse(Invoice invoice)
         {
