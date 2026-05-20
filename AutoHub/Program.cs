@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.AspNetCore.Identity;  // ✅ Required for PasswordHasher<Customer>
+using Microsoft.AspNetCore.Identity;  //  Required for PasswordHasher<Customer>
 using System.Text;
 using AutoHub.API.Data;
 using AutoHub.API.Services;
@@ -10,9 +10,7 @@ using AutoHub.API.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ============================================
-// 🗄️ DATABASE CONFIGURATION
-// ============================================
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
@@ -23,9 +21,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         )
     ));
 
-// ============================================
-// 🔐 JWT AUTHENTICATION CONFIGURATION
-// ============================================
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opt =>
     {
@@ -40,12 +35,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"]!)),
 
-            // ✅ CRITICAL FIX: Tell ASP.NET Core which claim contains the role
+            //  CRITICAL FIX: Tell ASP.NET Core which claim contains the role
             RoleClaimType = "role",    // ← Fixes 403 Forbidden
             NameClaimType = "name"
         };
 
-        // ✅ Optional: Log JWT events for debugging
+        //  Optional: Log JWT events for debugging
         opt.Events = new JwtBearerEvents
         {
             OnAuthenticationFailed = context =>
@@ -64,9 +59,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// ============================================
-// 🔐 AUTHORIZATION POLICIES
-// ============================================
+
 builder.Services.AddAuthorization(opt =>
 {
     opt.AddPolicy("Customer", p => p.RequireRole("Customer"));
@@ -74,9 +67,7 @@ builder.Services.AddAuthorization(opt =>
     opt.AddPolicy("Admin", p => p.RequireRole("Admin"));
 });
 
-// ============================================
-// 🌐 CORS CONFIGURATION
-// ============================================
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactApp", policy =>
@@ -92,39 +83,26 @@ builder.Services.AddCors(options =>
     });
 });
 
-// ============================================
-// 📧 EMAIL SERVICE
-// ============================================
+
 if (builder.Environment.IsDevelopment())
-   
+
     builder.Services.AddScoped<IEmailService, EmailService>();
 
-// ============================================
-// 🔧 OTHER SERVICES
-// ============================================
 builder.Services.AddScoped<InvoiceService>();
 builder.Services.AddScoped<DiscountService>();
 builder.Services.AddScoped<KhaltiService>();
 builder.Services.AddScoped<InvoiceEmailService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
-// ============================================
-// 🎮 CONTROLLERS & SWAGGER
-// ============================================
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 
-
-// ============================================
-// 🚀 BUILD APP
-// ============================================
 var app = builder.Build();
 
-// ============================================
-// 🛠️ MIDDLEWARE PIPELINE
-// ============================================
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -141,9 +119,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// ============================================
-// 🔄 AUTO-MIGRATE DATABASE ON STARTUP
-// ============================================
+
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -169,23 +145,20 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// ============================================
-// 🔐 SEED FIRST ADMIN ACCOUNT (FIXED SCOPE ERROR)
-// ============================================
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var db = services.GetRequiredService<AppDbContext>();
     var hasher = new PasswordHasher<Customer>();
 
-    // ✅ FIXED: Declare seedLogger ONCE at the top of the block
+    //  FIXED: Declare seedLogger ONCE at the top of the block
     var seedLogger = services.GetRequiredService<ILogger<Program>>();
 
     try
     {
         if (!await db.Customers.AnyAsync(c => c.UserType == "Admin"))
         {
-            seedLogger.LogInformation("🔐 Creating default admin account...");
+            seedLogger.LogInformation(" Creating default admin account...");
 
             var adminEmail = builder.Configuration["AdminSeed:Email"] ?? "admin@autohub.com";
             var adminPassword = builder.Configuration["AdminSeed:Password"] ?? "AdminPass123!";
@@ -208,19 +181,19 @@ using (var scope = app.Services.CreateScope())
             db.Customers.Add(admin);
             await db.SaveChangesAsync();
 
-            seedLogger.LogInformation("✅ Default admin created: {Email}", adminEmail);
-            seedLogger.LogWarning("⚠️  PRODUCTION WARNING: Change the default password immediately!");
-            seedLogger.LogInformation("🔑 Default credentials: {Email} / {Password}", adminEmail, adminPassword);
+            seedLogger.LogInformation(" Default admin created: {Email}", adminEmail);
+            seedLogger.LogWarning("  PRODUCTION WARNING: Change the default password immediately!");
+            seedLogger.LogInformation(" Default credentials: {Email} / {Password}", adminEmail, adminPassword);
         }
         else
         {
-            seedLogger.LogInformation("✅ Admin account(s) already exist - skipping seed");
+            seedLogger.LogInformation(" Admin account(s) already exist - skipping seed");
         }
     }
     catch (Exception ex)
     {
-        // ✅ FIXED: Reuse seedLogger (don't redeclare with 'var')
-        seedLogger.LogError(ex, "❌ Failed to seed admin account");
+        //  FIXED: Reuse seedLogger (don't redeclare with 'var')
+        seedLogger.LogError(ex, " Failed to seed admin account");
     }
 }
 
